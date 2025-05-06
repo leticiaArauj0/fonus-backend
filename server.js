@@ -21,16 +21,16 @@ const saveUsers = (users) => {
 
 app.post("/register", (req, res) => {
     const users = readUsers();
-    const { name, age, email, password } = req.body;
+    const { name, age, email, password, childName = null, childAge = null } = req.body;
 
     if (users.find(u => u.email === email)) {
         return res.status(400).json({ message: "Usuário já existe" });
     }
 
-    users.push({ name, age, email, password });
+    users.push({ name, age, email, password, childName, childAge });
     saveUsers(users);
 
-    res.status(200).json({ user: true})
+    res.status(200).json({ user: true });
 });
 
 app.post("/login", (req, res) => {
@@ -44,6 +44,60 @@ app.post("/login", (req, res) => {
     }
 
     res.status(200).json({ user });
+});
+
+app.put("/update-child", (req, res) => {
+    const users = readUsers();
+    const { email, childName = null, childAge = null } = req.body;
+
+    const userIndex = users.findIndex(u => u.email === email);
+    if (userIndex === -1) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    users[userIndex].childName = childName;
+    users[userIndex].childAge = childAge;
+
+    saveUsers(users);
+
+    res.status(200).json({ message: "Dados da criança atualizados com sucesso" });
+});
+
+app.put("/update-conditions", (req, res) => {
+    const users = readUsers();
+    const { email, conditions = [] } = req.body;
+
+    const userIndex = users.findIndex(u => u.email === email);
+    if (userIndex === -1) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    users[userIndex].conditions = conditions;
+    saveUsers(users);
+
+    res.status(200).json({ message: "Condições atualizadas com sucesso" });
+});
+
+const { exec } = require("child_process");
+
+app.post('/analyze-local', upload.single('audio'), async (req, res) => {
+    const expected = req.body.expected?.toLowerCase();
+    const audioPath = req.file.path;
+
+    const command = `whisper-env/bin/python3 whisper_runner.py ${audioPath}`;
+
+    exec(command, { cwd: __dirname }, (err, stdout, stderr) => {
+        fs.unlink(audioPath, () => {});
+
+        if (err) {
+            console.error(stderr);
+            return res.status(500).json({ error: "Erro ao rodar Whisper localmente." });
+        }
+
+        const result = stdout.trim().toLowerCase();
+        const isCorrect = result === expected;
+        res.json({ expected, result, isCorrect });
+    });
 });
 
 app.listen(PORT, "0.0.0.0", () =>
