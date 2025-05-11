@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 const app = express();
 const PORT = 3000;
@@ -93,11 +95,12 @@ app.post('/analyze-local', upload.single('audio'), async (req, res) => {
             console.error(stderr);
             return res.status(500).json({ error: "Erro ao rodar Whisper localmente." });
         }
-
+        
         const result = stdout.trim().toLowerCase();
+
         const isCorrect = result === expected;
         res.json({ expected, result, isCorrect });
-    });
+    });  
 });
 
 app.listen(PORT, "0.0.0.0", () =>
