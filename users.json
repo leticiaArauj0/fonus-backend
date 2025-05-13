@@ -1,52 +1,5 @@
 [
   {
-    "name": "Batman",
-    "age": "30",
-    "email": "batman@gmail.com",
-    "password": "batman",
-    "childName": "Robin",
-    "childAge": "8",
-    "conditions": [
-      "Hipernasalidade",
-      "Distúrbio Fonológico",
-      "Dislexia"
-    ]
-  },
-  {
-    "name": "Hera",
-    "age": "30",
-    "email": "hera@gmail.com",
-    "password": "hera",
-    "childName": "Levi",
-    "childAge": "10",
-    "conditions": [
-      "Hipernasalidade",
-      "Dislexia",
-      "Distúrbio Fonológico"
-    ]
-  },
-  {
-    "name": "",
-    "age": "",
-    "email": "",
-    "password": "",
-    "childName": null,
-    "childAge": null
-  },
-  {
-    "name": "Leticia ",
-    "age": "18",
-    "email": "leticia@gmail.com",
-    "password": "12345678",
-    "childName": "Danilo",
-    "childAge": "8",
-    "conditions": [
-      "Hipernasalidade",
-      "Distúrbio Fonológico",
-      "Dislexia"
-    ]
-  },
-  {
     "name": "Leticia",
     "age": "20",
     "email": "araujo@gmail.com",
