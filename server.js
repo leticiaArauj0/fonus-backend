@@ -88,32 +88,27 @@ app.post('/analyze-deepgram', upload.single('audio'), async (req, res) => {
     const audioPath = req.file.path;
 
     try {
-        // 1. Lê o arquivo de áudio
         const audioFile = fs.readFileSync(audioPath);
         
-        // 2. Envia para o Deepgram (usando binary upload)
         const response = await axios.post(
             'https://api.deepgram.com/v1/listen',
             audioFile,
             {
                 headers: {
                     'Authorization': `Token ${DEEPGRAM_API_KEY}`,
-                    'Content-Type': 'audio/mpeg', // Ajuste conforme o formato (ex: audio/mpeg)
+                    'Content-Type': 'audio/mpeg',
                 },
                 params: {
                     language: 'pt-BR',
-                    model: 'nova-2', // Modelo mais preciso (opcional)
+                    model: 'nova-2',
+                    punctuate: false,
                 },
             }
         );
 
-        // 3. Extrai o texto transcrito
         const transcript = response.data.results.channels[0].alternatives[0].transcript.toLowerCase().trim();
-        
-        // 4. Compara com o esperado
         const isCorrect = transcript === expected;
 
-        // 5. Resposta
         res.json({
             expected,
             result: transcript,
@@ -124,7 +119,6 @@ app.post('/analyze-deepgram', upload.single('audio'), async (req, res) => {
         console.error('Erro no Deepgram:', error.response?.data || error.message);
         res.status(500).json({ error: 'Falha na transcrição' });
     } finally {
-        // Remove o arquivo temporário
         fs.unlink(audioPath, () => {});
     }
 });
