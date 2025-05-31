@@ -1,8 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const axios = require('axios');
 const fs = require("fs");
 const multer = require("multer");
+
 const upload = multer({ dest: "uploads/" });
+const DEEPGRAM_API_KEY = 'b0cd8fb91ee60ecd9ba05a2b5eeeaf276795079f';
 
 const app = express();
 const PORT = 3000;
@@ -80,28 +83,52 @@ app.put("/update-conditions", (req, res) => {
     res.status(200).json({ message: "Condições atualizadas com sucesso" });
 });
 
-const { exec } = require("child_process");
-
-app.post('/analyze-local', upload.single('audio'), async (req, res) => {
+app.post('/analyze-deepgram', upload.single('audio'), async (req, res) => {
     const expected = req.body.expected?.toLowerCase();
     const audioPath = req.file.path;
 
-    const command = `whisper-env/bin/python3 whisper_runner.py ${audioPath}`;
-
-    exec(command, { cwd: __dirname }, (err, stdout, stderr) => {
-        fs.unlink(audioPath, () => {});
-
-        if (err) {
-            console.error(stderr);
-            return res.status(500).json({ error: "Erro ao rodar Whisper localmente." });
-        }
+    try {
+        // 1. Lê o arquivo de áudio
+        const audioFile = fs.readFileSync(audioPath);
         
-        const result = stdout.trim().toLowerCase();
+        // 2. Envia para o Deepgram (usando binary upload)
+        const response = await axios.post(
+            'https://api.deepgram.com/v1/listen',
+            audioFile,
+            {
+                headers: {
+                    'Authorization': `Token ${DEEPGRAM_API_KEY}`,
+                    'Content-Type': 'audio/mpeg', // Ajuste conforme o formato (ex: audio/mpeg)
+                },
+                params: {
+                    language: 'pt-BR',
+                    model: 'nova-2', // Modelo mais preciso (opcional)
+                },
+            }
+        );
 
-        const isCorrect = result === expected;
-        res.json({ expected, result, isCorrect });
-    });  
+        // 3. Extrai o texto transcrito
+        const transcript = response.data.results.channels[0].alternatives[0].transcript.toLowerCase().trim();
+        
+        // 4. Compara com o esperado
+        const isCorrect = transcript === expected;
+
+        // 5. Resposta
+        res.json({
+            expected,
+            result: transcript,
+            isCorrect,
+        });
+
+    } catch (error) {
+        console.error('Erro no Deepgram:', error.response?.data || error.message);
+        res.status(500).json({ error: 'Falha na transcrição' });
+    } finally {
+        // Remove o arquivo temporário
+        fs.unlink(audioPath, () => {});
+    }
 });
+
 
 app.listen(PORT, "0.0.0.0", () =>
     console.log(`Servidor rodando em http://0.0.0.0:${PORT}`)
