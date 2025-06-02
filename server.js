@@ -83,6 +83,33 @@ app.put("/update-conditions", (req, res) => {
     res.status(200).json({ message: "Condições atualizadas com sucesso" });
 });
 
+app.put("/update-agegroup", (req, res) => {
+    const users = readUsers();
+    const { email, ageGroup } = req.body;
+
+    if (!email || !ageGroup) {
+        return res.status(400).json({ message: "Email e ageGroup são obrigatórios" });
+    }
+
+    const validAgeGroups = ['2-3', '4-5', '6-7'];
+    if (!validAgeGroups.includes(ageGroup)) {
+        return res.status(400).json({ message: "Faixa etária inválida" });
+    }
+
+    const userIndex = users.findIndex(u => u.email === email);
+    if (userIndex === -1) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    users[userIndex].ageGroup = ageGroup;
+    saveUsers(users);
+
+    res.status(200).json({ 
+        message: "Faixa etária atualizada com sucesso",
+        user: users[userIndex]
+    });
+});
+
 app.post('/analyze-deepgram', upload.single('audio'), async (req, res) => {
     const expected = req.body.expected?.toLowerCase();
     const audioPath = req.file.path;
